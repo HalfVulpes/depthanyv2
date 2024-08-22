@@ -15,6 +15,7 @@ def parse_arguments():
     parser.add_argument('--input_dir', type=str, required=True, help='Directory containing input images.')
     parser.add_argument('--output_dir', type=str, required=True, help='Directory to save output depth estimation images.')
     parser.add_argument('--encoder', type=str, default='vits', choices=['vits', 'vitb', 'vitl', 'vitg'], help='Encoder type to use in the model.')
+    parser.add_argument('--auto_update', type=bool, default=False, choices=[True, False], help='Set true if auto update is required')
     return parser.parse_args()
 
 def check_and_download_checkpoint(encoder):
@@ -45,11 +46,30 @@ def download_file(url, output_path):
 def natural_sort_key(s):
     return [int(text) if text.isdigit() else text.lower() for text in re.split('(\d+)', s)]
 
+def process_images(model, input_dir, output_dir, cmap, processed_files):
+    files = os.listdir(input_dir)
+    new_files = [file for file in files if file.endswith(('.png', '.jpg', '.jpeg')) and file not in processed_files]
+
+    new_files.sort(key=natural_sort_key)
+
+    for file in new_files:
+        processed_files.add(file)
+        img_path = os.path.join(input_dir, file)
+        print(f'Processing: {img_path}')
+        raw_image = cv2.imread(img_path)
+        depth = model.infer_image(raw_image)
+        depth = (depth - depth.min()) / (depth.max() - depth.min()) * 255.0
+        depth = depth.astype(np.uint8)
+        output_path = os.path.join(output_dir, os.path.splitext(file)[0] + '_depth.png')
+        cv2.imwrite(output_path, depth)
+        print(f'Depth estimation saved to: {output_path}')
+
 def main():
     args = parse_arguments()
     input_dir = args.input_dir
     output_dir = args.output_dir
     encoder = args.encoder
+    auto_update = args.auto_update
 
     checkpoint_path = check_and_download_checkpoint(encoder)
     model = DepthAnythingV2(**model_configs[encoder])
@@ -57,26 +77,16 @@ def main():
     model.load_state_dict(state_dict)
     model = model.to(DEVICE).eval()
 
+    cmap = matplotlib.colormaps.get_cmap('Spectral_r')
     os.makedirs(output_dir, exist_ok=True)
     processed_files = set()
 
     while True:
-        files = os.listdir(input_dir)
-        new_files = [file for file in files if file.endswith(('.png', '.jpg', '.jpeg')) and file not in processed_files]
+        process_images(model, input_dir, output_dir, cmap, processed_files)
 
-        new_files.sort(key=natural_sort_key)
-
-        for file in new_files:
-            processed_files.add(file)
-            img_path = os.path.join(input_dir, file)
-            print(f'Processing: {img_path}')
-            raw_image = cv2.imread(img_path)
-            depth = model.infer_image(raw_image)
-            depth = (depth - depth.min()) / (depth.max() - depth.min()) * 255.0
-            depth = depth.astype(np.uint8)
-            output_path = os.path.join(output_dir, os.path.splitext(file)[0] + '_depth.png')
-            cv2.imwrite(output_path, depth)
-            print(f'Depth estimation saved to: {output_path}')
+        if not auto_update:
+            print("Auto-update is disabled. Exiting after processing all images.")
+            break
 
         time.sleep(5)
 
