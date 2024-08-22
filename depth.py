@@ -57,8 +57,6 @@ def main():
     model.load_state_dict(state_dict)
     model = model.to(DEVICE).eval()
 
-    cmap = matplotlib.colormaps.get_cmap('Spectral_r')
-
     os.makedirs(output_dir, exist_ok=True)
     processed_files = set()
 
@@ -76,9 +74,8 @@ def main():
             depth = model.infer_image(raw_image)
             depth = (depth - depth.min()) / (depth.max() - depth.min()) * 255.0
             depth = depth.astype(np.uint8)
-            depth_colored = (cmap(depth)[:, :, :3] * 255).astype(np.uint8)
             output_path = os.path.join(output_dir, os.path.splitext(file)[0] + '_depth.png')
-            cv2.imwrite(output_path, depth_colored)
+            cv2.imwrite(output_path, depth)
             print(f'Depth estimation saved to: {output_path}')
 
         time.sleep(5)
