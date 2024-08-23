@@ -57,7 +57,7 @@ def process_images(model, input_dir, output_dir, cmap, processed_files):
         img_path = os.path.join(input_dir, file)
         print(f'Processing: {img_path}')
         raw_image = cv2.imread(img_path)
-        depth = model.infer_image(raw_image)
+        depth = model.infer_image(raw_image) * 65535
         # depth = (depth - depth.min()) / (depth.max() - depth.min()) * 255.0
         depth = depth.astype(np.uint8)
         output_path = os.path.join(output_dir, os.path.splitext(file)[0] + '_depth.png')
