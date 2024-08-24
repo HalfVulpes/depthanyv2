@@ -16,6 +16,7 @@ def parse_arguments():
     parser.add_argument('--output_dir', type=str, required=True, help='Directory to save output depth estimation images.')
     parser.add_argument('--encoder', type=str, default='vits', choices=['vits', 'vitb', 'vitl', 'vitg'], help='Encoder type to use in the model.')
     parser.add_argument('--auto_update', type=bool, default=False, choices=[True, False], help='Set true if auto update is required')
+    parser.add_argument('--max_infer_nums', type=int, default=10, help='Maximum number of depth imaged infered by the depthany')
     return parser.parse_args()
 
 def check_and_download_checkpoint(encoder):
@@ -46,11 +47,11 @@ def download_file(url, output_path):
 def natural_sort_key(s):
     return [int(text) if text.isdigit() else text.lower() for text in re.split('(\d+)', s)]
 
-def process_images(model, input_dir, output_dir, cmap, processed_files):
+def process_images(model, input_dir, output_dir, cmap, processed_files, max_infer_nums):
     files = os.listdir(input_dir)
     new_files = [file for file in files if file.endswith(('.png', '.jpg', '.jpeg')) and file not in processed_files]
 
-    new_files.sort(key=natural_sort_key)
+    new_files.sort(key=natural_sort_key)[:max_infer_nums]
 
     for file in new_files:
         processed_files.add(file)
@@ -70,6 +71,7 @@ def main():
     output_dir = args.output_dir
     encoder = args.encoder
     auto_update = args.auto_update
+    max_infer_nums = args.max_infer_nums
 
     checkpoint_path = check_and_download_checkpoint(encoder)
     model = DepthAnythingV2(**model_configs[encoder])
@@ -82,7 +84,7 @@ def main():
     processed_files = set()
 
     while True:
-        process_images(model, input_dir, output_dir, cmap, processed_files)
+        process_images(model, input_dir, output_dir, cmap, processed_files, max_infer_nums)
 
         if not auto_update:
             print("Auto-update is disabled. Exiting after processing all images.")
