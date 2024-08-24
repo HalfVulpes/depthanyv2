@@ -61,8 +61,8 @@ def process_images(model, input_dir, output_dir, cmap, processed_files, max_infe
         print(f'Processing: {img_path}')
         raw_image = cv2.imread(img_path)
         depth = model.infer_image(raw_image)
-        output_path = os.path.join(output_dir, os.path.splitext(file)[0] + '_depth.png')
-        cv2.imwrite(output_path, depth)
+        output_path = os.path.join(output_dir, os.path.splitext(file)[0] + '_depth.raw')
+        np.savetxt(output_path, depth, delimiter=',')
         depth = (depth - depth.min()) / (depth.max() - depth.min()) * 255.0
         output_path = os.path.join(output_dir, os.path.splitext(file)[0] + '_depth_normalized.png')
         cv2.imwrite(output_path, depth)
