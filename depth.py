@@ -51,7 +51,9 @@ def process_images(model, input_dir, output_dir, cmap, processed_files, max_infe
     files = os.listdir(input_dir)
     new_files = [file for file in files if file.endswith(('.png', '.jpg', '.jpeg')) and file not in processed_files]
 
-    new_files.sort(key=natural_sort_key)[:max_infer_nums]
+    new_files.sort(key=natural_sort_key)
+
+    new_files = new_files[:max_infer_nums]
 
     for file in new_files:
         processed_files.add(file)
