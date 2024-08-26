@@ -3,3 +3,4 @@
 checkpoints/
 depth_anything_v2/dinov2_layers/__pycache__/
 depth_anything_v2/util/__pycache__/
+depth_anything_v2/__pycache__/
