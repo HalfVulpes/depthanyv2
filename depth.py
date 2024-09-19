@@ -77,7 +77,7 @@ def main():
     max_infer_nums = args.max_infer_nums
 
     # Determine the device
-    DEVICE = 'cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'hip' if torch.backends.hip.is_available() else 'cpu'
+    DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
     
     # Print the device being used
     print(f"Using compute device: {DEVICE}")
