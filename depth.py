@@ -76,11 +76,17 @@ def main():
     auto_update = args.auto_update
     max_infer_nums = args.max_infer_nums
 
+    # Determine the device
+    DEVICE = 'cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'hip' if torch.backends.hip.is_available() else 'cpu'
+    
+    # Print the device being used
+    print(f"Using compute device: {DEVICE}")
+    
     checkpoint_path = check_and_download_checkpoint(encoder)
     model = DepthAnythingV2(**model_configs[encoder])
     state_dict = torch.load(checkpoint_path, map_location='cpu')
     model.load_state_dict(state_dict)
-    model = model.to(DEVICE).eval()
+    model = model.to(torch.device(DEVICE)).eval()
 
     cmap = matplotlib.colormaps.get_cmap('Spectral_r')
     os.makedirs(output_dir, exist_ok=True)
@@ -96,7 +102,6 @@ def main():
         time.sleep(5)
 
 if __name__ == '__main__':
-    DEVICE = 'cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu'
     model_configs = {
         'vits': {'encoder': 'vits', 'features': 64, 'out_channels': [48, 96, 192, 384]},
         'vitb': {'encoder': 'vitb', 'features': 128, 'out_channels': [96, 192, 384, 768]},
